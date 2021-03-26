@@ -1,75 +1,72 @@
 // ==UserScript==
 // @name        Luogu Fucker
-// @namespace   LuoguScripts
+// @namespace   Luogu Scripts
 // @match       *://www.luogu.com.cn/*
 // @grant       none
-// @version     1.0
-// @author      Cnnb
+// @version     1.1
+// @author      ImChinaNB
 // @description Fuck up Luogu so it selects C++17 and enables O2 by default.
 // @require https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js
+// @require https://gist.githubusercontent.com/raw/2625891/waitForKeyElements.js
 // @grant       GM_addStyle
 // @run-at      document-idle
 // ==/UserScript==
 //
 function main($) {
-  try {
-    let removeADInterval = setInterval(function(){
-        let sidebar = $(".side")[0];
-        if (sidebar == undefined){
-            return;
-        }
-        clearInterval(removeADInterval);
-        const callback = function(mutationsList, observer) {
-            let ad = $(".side > div:last-of-type");
-            if (ad[0] == undefined) return;
-            if (ad[0].innerText.indexOf("洛谷推荐") != -1) {
-                console.info("%c[LGFk> AdRemover]%c hiding ad", "color:cyan", "color:white", ad[0]);
-                ad.hide();
-            }
-        };
-        let observer = new MutationObserver(callback);
-        observer.observe(sidebar, { attributes: false, childList: true, subtree: false });
-        callback();
-    }, 50);
-}
-catch (e) {
-  console.warn("[%cLGFk> AdRemover]%c uncaught exception:", "color:cyan", "color:white", e);
-}
-$(".operation button").click(() => {
-  try {
-    if ($(".combo-wrapper.lang-select")[0] && ($(".combo-wrapper.lang-select")[0].innerText == "自动识别语言" || $(".combo-wrapper.lang-select")[0].innerText == "C++11")) {
-      console.info("%c[LGFk> SubmitHelper]%c language set to C++17.","color:cyan", "color:white");
-      $(".combo-wrapper.lang-select ul")[0].children[10].click();
+  const w = (x) => { return () => { return $(x); } } ;
+  const _ = {
+      "sb" : w(".side > div:last-of-type:visible"),
+      "lang": w("div[currenttemplate=ProblemShow] .combo-wrapper.lang-select:visible > div.text"),
+      "langul": w("div[currenttemplate=ProblemShow] .combo-wrapper.lang-select:visible ul"),
+      "o2box": w("div[currenttemplate=ProblemShow] .combo-wrapper.lang-select:visible + div input[type=checkbox]"),
+      "watch": "div[currenttemplate=ProblemShow]",
+      "style": {"type": "button", 'class': 'lfe-form-sz-small', 'style': "margin-left: 1cm; border-color: rgb(52, 152, 219); color: white; background-color: rgb(52, 152, 219);"}
+  };
+  waitForKeyElements(".side > div:last-of-type", () => {
+    let ad = _.sb();
+    if (ad.text().indexOf("洛谷推荐") != -1) {
+      console.log("%c[LGFk> AdRemover]%c hiding ad", "color:cyan", "color:white", ad[0]);
+      ad.hide();
     }
-    if ($("div[currenttemplate=ProblemShow] input[type=checkbox]")[0] && !$("div[currenttemplate=ProblemShow] input[type=checkbox]")[0].checked) {
-        console.info("%c[LGFk> SubmitHelper]%c enabled -O2.","color:cyan", "color:white");
-        $("div[currenttemplate=ProblemShow] input[type=checkbox]")[0].click();
-    }
-  }
-  catch (e) {
-    console.warn("%c[LGFk> SubmitHelper]%c uncaught exception:","color:cyan", "color:white", e);
-  }
-  try {
-      let a = document.querySelector(".form-layout .row .search");
-      let b = document.createElement("button"), c = {"type": "button", 'class': 'lfe-form-sz-small', 'style': "margin-left: 1cm; border-color: rgb(52, 152, 219); color: white; background-color: rgb(52, 152, 219);"};
-      if (!a || !b || !c) return;
-      for (var key in c) b.setAttribute(key, c[key]);
-      b.innerText = "导出题单"; a.appendChild(b);
-      b.onclick = function() {
-          let a = document.querySelectorAll(".problem-order .drag-order .wrapper .content>span");
-          var b = [];
-          a.forEach((x) => {
-              x = x.innerHTML;
-              b.push(x.slice(0, x.indexOf(' ')));
-          });
-          console.log(b);
-          prompt("复制下面的题目列表.", /*JSON.stringify(b)*/b.toString());
+  });
+
+  const l = () => {
+    try {
+      let a = _.lang(), b = _.langul(), c = _.o2box();
+      if (a.text() == "自动识别语言" || a.text() == "C++11") {
+        console.log("%c[LGFk> SubmitHelper]%c language set to C++17.","color:cyan", "color:white");
+        b.children(10).click();
       }
-  }
-  catch (e) {
-    console.warn("%c[LGFk> ProbExport]%c uncaught exception:", "color:cyan", "color:white", e);
-  }
-});
+      if (c[0] && !c.is(":checked")) {
+          console.log("%c[LGFk> SubmitHelper]%c enabled -O2.","color:cyan", "color:white");
+          c.click();
+      }
+    }
+    catch (e) {
+      console.warn("%c[LGFk> SubmitHelper]%c uncaught exception:","color:cyan", "color:white", e);
+    }
+    try {
+        let a = $(".form-layout .row .search"), b = $(document.createElement("button"));
+        if (!a[0] || $(".form-layout .row .search button").text().indexOf("导出题单") != -1) return;
+        for (let key in _.style) b.attr(key, _.style[key]);
+        console.log("%c[LGFk> ProbExport]%c created the export button.","color:cyan", "color:white");
+        a.append(b.text("导出题单").click(() => {
+            let a = $(".problem-order .drag-order .wrapper .content>span");
+            let b = [];
+            a.toArray().forEach((x) => {
+                x = x.innerHTML;
+                b.push(x.slice(0, x.indexOf(' ')));
+            });
+            console.log(b);
+            prompt("复制下面的题目列表.", /*JSON.stringify(b)*/b.toString());
+        }));
+    }
+    catch (e) {
+      console.warn("%c[LGFk> ProbExport]%c uncaught exception:", "color:cyan", "color:white", e);
+    }
+  };
+  // new MutationObserver(l).observe($("body")[0], { attributes: true, childList: true, subtree: true });
+  setInterval(l, 200);
 }
 
 console.log("%c[LGFk]%c loading LG Fucker with jQuery ", "color:cyan", "color:white", jQuery);
