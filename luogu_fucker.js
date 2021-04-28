@@ -6,9 +6,10 @@
 // @version     1.1
 // @author      ImChinaNB
 // @description Fuck up Luogu so it selects C++17 and enables O2 by default.
-// @require https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js
 // @require https://gist.githubusercontent.com/raw/2625891/waitForKeyElements.js
+// @require https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js
 // @grant       GM_addStyle
+// @grant       GM.getValue
 // @run-at      document-idle
 // ==/UserScript==
 //
@@ -69,5 +70,7 @@ function main($) {
   setInterval(l, 200);
 }
 
-console.log("%c[LGFk]%c loading LG Fucker with jQuery ", "color:cyan", "color:white", jQuery);
-main(jQuery);
+this.$ = this.jQuery = jQuery.noConflict(true);
+
+console.log("%c[LGFk]%c loading LG Fucker with jQuery ", "color:cyan", "color:white", this.$);
+main(this.$);
